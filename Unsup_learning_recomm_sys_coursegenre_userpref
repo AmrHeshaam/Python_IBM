@@ -1,0 +1,54 @@
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.cluster import KMeans
+
+# Sample data
+course_data = pd.DataFrame({
+    'course_id': [1, 2, 3, 4],
+    'title': ['Python for Data Science', 'Introduction to Data Science', 'Big Data 101', 'Hadoop 101'],
+    'description': ['Learn Python for data analysis', 'Introduction to data science concepts', 'Learn Big Data basics', 'Introduction to Hadoop']
+})
+
+user_profiles = pd.DataFrame({
+    'user_id': [1, 2],
+    'preferences': ['Python, Data Science', 'Big Data, Hadoop']
+})
+
+# Step 2: Data Preprocessing
+# Clean and preprocess the data
+# Here we assume data is already clean
+
+# Step 3: Feature Extraction
+# Extract features from course descriptions
+tfidf = TfidfVectorizer(stop_words='english')
+tfidf_matrix = tfidf.fit_transform(course_data['description'])
+
+# Extract features from user preferences
+user_tfidf_matrix = tfidf.transform(user_profiles['preferences'])
+
+# Step 4: Calculate Similarities
+# Calculate similarity between courses and user profiles
+course_similarity = cosine_similarity(tfidf_matrix, tfidf_matrix)
+user_similarity = cosine_similarity(user_tfidf_matrix, tfidf_matrix)
+
+# Step 5: Build Recommender Model
+# Cluster courses using K-Means
+kmeans = KMeans(n_clusters=2)
+kmeans.fit(tfidf_matrix)
+course_clusters = kmeans.predict(tfidf_matrix)
+
+# Generate recommendations based on clusters
+recommendations = {}
+for user_idx, user_id in enumerate(user_profiles['user_id']):
+    user_pref_cluster = kmeans.predict(user_tfidf_matrix[user_idx])
+    recommended_courses = course_data[course_clusters == user_pref_cluster[0]]
+    recommendations[user_id] = recommended_courses['title'].tolist()
+
+# Output recommendations
+for user_id, recs in recommendations.items():
+    print(f"Recommendations for User {user_id}: {recs}")
+
+# Step 6: Model Evaluation
+# Evaluate the model (e.g., precision, recall)
+# Placeholder for evaluation steps
